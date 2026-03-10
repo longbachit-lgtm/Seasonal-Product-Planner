@@ -67,7 +67,7 @@ export default function FocusPage() {
             <p className="page-subtitle">Pomodoro cho phiên nghiên cứu sản phẩm</p>
 
             {/* Mode Toggle */}
-            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', marginBottom: '32px', background: 'var(--color-bg)', borderRadius: '12px', padding: '4px', border: '1px solid var(--color-border)', display: 'inline-flex' }}>
+            <div style={{ display: 'inline-flex', gap: '4px', justifyContent: 'center', marginBottom: '32px', background: 'var(--color-bg)', borderRadius: '12px', padding: '4px', border: '1px solid var(--color-border)' }}>
                 <button
                     className={`btn btn-sm ${mode === 'work' ? 'btn-primary' : ''}`}
                     onClick={() => switchMode('work')}
