@@ -20,9 +20,14 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { isLoggedIn, currentUser, darkMode, toggleDarkMode, logout, notifications, setShowSearchModal } = useStore();
+    const { isLoggedIn, currentUser, darkMode, toggleDarkMode, logout, notifications, setShowSearchModal, checkAuth } = useStore();
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    // Check for existing auth session on mount
+    useEffect(() => {
+        checkAuth();
+    }, [checkAuth]);
 
     useEffect(() => {
         if (!isLoggedIn) {
@@ -95,7 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         {darkMode ? 'Light Mode' : 'Dark Mode'}
                     </button>
-                    <button className="nav-item" onClick={() => { logout(); router.push('/login'); }} style={{ color: '#EF4444' }}>
+                    <button className="nav-item" onClick={async () => { await logout(); router.push('/login'); }} style={{ color: '#EF4444' }}>
                         <LogOut size={20} />
                         Đăng xuất
                     </button>
