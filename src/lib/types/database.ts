@@ -27,6 +27,7 @@ export interface Keyword {
   season_id: string;
   keyword: string;
   reference_url: string | null;
+  search_count?: number | null;
   search_volume: 'High' | 'Medium' | 'Low' | null;
   competition: string | null;
   notes: string | null;

@@ -19,17 +19,18 @@ export default function SeasonDetailPage() {
     const seasonProgress = progress.find((p) => p.season_id === seasonId);
 
     const [search, setSearch] = useState('');
-    const [sortBy, setSortBy] = useState<'keyword' | 'search_volume' | 'created_at'>('created_at');
+    const [sortBy, setSortBy] = useState<'keyword' | 'search_volume' | 'search_count' | 'created_at'>('created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [dragActive, setDragActive] = useState(false);
-    const [importPreview, setImportPreview] = useState<Array<{ keyword: string; reference_url: string; search_volume: string; competition: string; notes: string }>>([]);
+    const [importPreview, setImportPreview] = useState<Array<{ keyword: string; reference_url: string; search_count: string; search_volume: string; competition: string; notes: string }>>([]);
     const [toast, setToast] = useState('');
 
     // New keyword form
     const [newKeyword, setNewKeyword] = useState('');
     const [newUrl, setNewUrl] = useState('');
+    const [newSearchCount, setNewSearchCount] = useState('');
     const [newVolume, setNewVolume] = useState<'High' | 'Medium' | 'Low'>('Medium');
     const [newNotes, setNewNotes] = useState('');
 
@@ -56,6 +57,7 @@ export default function SeasonDetailPage() {
         .sort((a, b) => {
             const mult = sortOrder === 'asc' ? 1 : -1;
             if (sortBy === 'keyword') return a.keyword.localeCompare(b.keyword) * mult;
+            if (sortBy === 'search_count') return ((a.search_count || 0) - (b.search_count || 0)) * mult;
             if (sortBy === 'search_volume') return ((a.search_volume || '').localeCompare(b.search_volume || '')) * mult;
             return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * mult;
         });
@@ -72,11 +74,12 @@ export default function SeasonDetailPage() {
             season_id: seasonId,
             keyword: newKeyword.trim(),
             reference_url: newUrl || null,
+            search_count: newSearchCount ? parseInt(newSearchCount) : null,
             search_volume: newVolume,
             competition: null,
             notes: newNotes || null,
         });
-        setNewKeyword(''); setNewUrl(''); setNewNotes('');
+        setNewKeyword(''); setNewUrl(''); setNewSearchCount(''); setNewNotes('');
         setShowAddForm(false);
         showToast('Đã thêm keyword!');
     };
@@ -85,6 +88,7 @@ export default function SeasonDetailPage() {
         const data = seasonKeywords.map((k) => ({
             Keyword: k.keyword,
             URL: k.reference_url || '',
+            'Search Count': k.search_count || '',
             'Search Volume': k.search_volume || '',
             Competition: k.competition || '',
             Notes: k.notes || '',
@@ -106,6 +110,7 @@ export default function SeasonDetailPage() {
             const preview = rows.map((row) => ({
                 keyword: row['keyword'] || row['Keyword'] || row['KEYWORD'] || '',
                 reference_url: row['url'] || row['URL'] || row['reference_url'] || '',
+                search_count: row['search_count'] || row['Search Count'] || row['search'] || row['Search'] || '',
                 search_volume: row['volume'] || row['Volume'] || row['search_volume'] || 'Medium',
                 competition: row['competition'] || row['Competition'] || '',
                 notes: row['notes'] || row['Notes'] || '',
@@ -126,6 +131,7 @@ export default function SeasonDetailPage() {
             season_id: seasonId,
             keyword: k.keyword,
             reference_url: k.reference_url || null,
+            search_count: k.search_count ? parseInt(k.search_count) : null,
             search_volume: (k.search_volume as 'High' | 'Medium' | 'Low') || null,
             competition: k.competition || null,
             notes: k.notes || null,
@@ -262,6 +268,9 @@ export default function SeasonDetailPage() {
                                     Keyword <ArrowUpDown size={12} style={{ opacity: 0.5 }} />
                                 </th>
                                 <th>URL</th>
+                                <th onClick={() => handleSort('search_count')} style={{ cursor: 'pointer' }}>
+                                    Search Count <ArrowUpDown size={12} style={{ opacity: 0.5 }} />
+                                </th>
                                 <th onClick={() => handleSort('search_volume')} style={{ cursor: 'pointer' }}>
                                     Volume <ArrowUpDown size={12} style={{ opacity: 0.5 }} />
                                 </th>
@@ -281,6 +290,7 @@ export default function SeasonDetailPage() {
                                             </a>
                                         ) : '—'}
                                     </td>
+                                    <td>{k.search_count || '—'}</td>
                                     <td>
                                         {k.search_volume && (
                                             <span className={`volume-badge volume-${k.search_volume.toLowerCase()}`}>
@@ -303,7 +313,7 @@ export default function SeasonDetailPage() {
                             ))}
                             {filteredKeywords.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>
+                                    <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>
                                         Chưa có keyword nào
                                     </td>
                                 </tr>
@@ -332,6 +342,10 @@ export default function SeasonDetailPage() {
                                 <div className="form-group">
                                     <label className="form-label">URL tham khảo</label>
                                     <input className="form-input" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://..." />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Search Count</label>
+                                    <input className="form-input" type="number" value={newSearchCount} onChange={(e) => setNewSearchCount(e.target.value)} placeholder="0" />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Search Volume</label>
@@ -387,7 +401,7 @@ export default function SeasonDetailPage() {
                                     <p style={{ fontWeight: 600, marginBottom: '4px' }}>Kéo thả file Excel hoặc click để chọn</p>
                                     <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Hỗ trợ .xlsx và .csv</p>
                                     <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-                                        Columns: keyword, url, volume, competition, notes
+                                        Columns: keyword, url, search_count, volume, competition, notes
                                     </p>
                                 </div>
                             ) : (
@@ -398,6 +412,7 @@ export default function SeasonDetailPage() {
                                             <thead>
                                                 <tr>
                                                     <th>Keyword</th>
+                                                    <th>Search Count</th>
                                                     <th>Volume</th>
                                                     <th>Notes</th>
                                                 </tr>
@@ -406,6 +421,7 @@ export default function SeasonDetailPage() {
                                                 {importPreview.slice(0, 20).map((k, i) => (
                                                     <tr key={i}>
                                                         <td style={{ fontWeight: 600 }}>{k.keyword}</td>
+                                                        <td>{k.search_count}</td>
                                                         <td>{k.search_volume}</td>
                                                         <td style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{k.notes || '—'}</td>
                                                     </tr>
